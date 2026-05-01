@@ -1,0 +1,136 @@
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { FileSpreadsheet, Info, ArrowRight, Download, CheckCircle2, Clock, RefreshCw } from "lucide-react";
+import { DataTemplate } from "./types";
+import { DATA_TEMPLATES } from "./data";
+
+interface StageSelectProps {
+  selectedTemplate: string;
+  onSelectTemplate: (id: string) => void;
+  onNext: () => void;
+}
+
+export const StageSelect = ({ selectedTemplate, onSelectTemplate, onNext }: StageSelectProps) => {
+  const template = DATA_TEMPLATES.find(t => t.id === selectedTemplate)!;
+
+  return (
+    <div className="space-y-5 animate-fade-up">
+      <div className="flex items-start gap-3 p-4 rounded-xl border border-border bg-card"
+        style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: "hsl(224 100% 91%)" }}>
+          <Info className="w-4 h-4" style={{ color: "hsl(224 100% 38%)" }} />
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-foreground">Select the data category you're submitting</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            Each template enforces specific validation rules aligned to KHDA reporting standards. Download the template to ensure your data is formatted correctly.
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {DATA_TEMPLATES.map(t => (
+          <button
+            key={t.id}
+            onClick={() => onSelectTemplate(t.id)}
+            className={cn(
+              "text-left p-4 rounded-xl border-2 transition-all duration-150 group",
+              selectedTemplate === t.id
+                ? "border-primary"
+                : "border-border bg-card hover:border-primary/30"
+            )}
+            style={selectedTemplate === t.id ? { background: "hsl(340 56% 40% / 0.04)", borderColor: "hsl(var(--primary))" } : { background: "hsl(0 0% 100%)" }}
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                style={{ background: selectedTemplate === t.id ? "hsl(340 52% 88%)" : "hsl(236 25% 95%)" }}>
+                {t.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={cn("text-sm font-semibold leading-tight", selectedTemplate === t.id ? "text-primary" : "text-foreground")}>
+                  {t.label}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">{t.frequency} · {t.rowCount} rows</div>
+              </div>
+              {selectedTemplate === t.id && (
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "hsl(var(--primary))" }} />
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">{t.description}</p>
+            <div className="flex flex-wrap gap-1">
+              {t.columns.slice(0, 5).map(c => (
+                <span key={c.field} className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+                  style={{ background: "hsl(236 25% 93%)", color: "hsl(214 18% 40%)" }}>
+                  {c.field}
+                </span>
+              ))}
+              {t.columns.length > 5 && (
+                <span className="text-[9px] text-muted-foreground px-1">+{t.columns.length - 5} more</span>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-xs font-semibold text-foreground">Selected: {template.label} Schema</div>
+          <div className="flex items-center gap-2">
+            <span className="badge-info">
+              <Clock className="w-3 h-3" />
+              {template.frequency} reporting
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {template.columns.map(col => (
+            <div key={col.field} className="flex items-center gap-2 p-2 rounded-lg"
+              style={{ background: "hsl(236 33% 98%)" }}>
+              <div className={cn(
+                "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                col.required ? "bg-error" : "bg-muted-foreground/40"
+              )} style={col.required ? { backgroundColor: "hsl(var(--error))" } : {}} />
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] font-medium text-foreground truncate">{col.field}</div>
+                <div className="text-[10px] text-muted-foreground">{col.example}</div>
+              </div>
+              <span className="text-[9px] px-1.5 py-0.5 rounded font-medium capitalize"
+                style={{ background: "hsl(236 25% 91%)", color: "hsl(214 18% 45%)" }}>
+                {col.type}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <div className="w-2 h-2 rounded-full bg-error" style={{ backgroundColor: "hsl(var(--error))" }} />
+            Required field
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <div className="w-2 h-2 rounded-full bg-border" />
+            Optional field
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <button className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline">
+              <Download className="w-3.5 h-3.5" /> Download Template (.xlsx)
+            </button>
+            <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+              <RefreshCw className="w-3 h-3" /> View Changelog
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={onNext}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
+          style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}
+        >
+          Continue to Upload <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};

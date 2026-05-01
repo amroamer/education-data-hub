@@ -1,0 +1,262 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+
+/* ============================================
+   KHDA — Knowledge & Human Development Authority
+   Design System — Authoritative, Modern, Dubai
+   ============================================ */
+
+@layer base {
+  :root {
+    /* Core Brand — Deep Navy + KHDA Burgundy */
+    --background: 236 33% 96%;
+    --foreground: 214 67% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 214 67% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 67% 10%;
+
+    /* Primary: Deep Navy (#0C233C) */
+    --primary: 214 67% 14%;
+    --primary-foreground: 0 0% 98%;
+
+    /* Secondary: Mid Navy */
+    --secondary: 214 50% 24%;
+    --secondary-foreground: 0 0% 95%;
+
+    /* Muted: Light lavender */
+    --muted: 236 25% 91%;
+    --muted-foreground: 214 18% 46%;
+
+    /* Accent: KHDA Burgundy (#9F2D57) */
+    --accent: 340 56% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Status Colors */
+    --success: 152 69% 31%;
+    --success-foreground: 0 0% 98%;
+    --success-light: 152 55% 92%;
+
+    --warning: 36 100% 50%;
+    --warning-foreground: 214 67% 14%;
+    --warning-light: 43 100% 92%;
+
+    --error: 0 72% 51%;
+    --error-foreground: 0 0% 98%;
+    --error-light: 0 86% 94%;
+
+    --info: 224 100% 50%;
+    --info-foreground: 0 0% 98%;
+    --info-light: 224 100% 91%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 236 20% 87%;
+    --input: 236 20% 87%;
+    --ring: 340 56% 40%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar */
+    --sidebar-background: 214 67% 14%;
+    --sidebar-foreground: 224 40% 82%;
+    --sidebar-primary: 340 56% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 55% 20%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 214 50% 20%;
+    --sidebar-ring: 340 56% 40%;
+    --sidebar-width: 13rem;
+    --sidebar-width-icon: 3.25rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(214 67% 14%) 0%, hsl(214 60% 22%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(340 56% 40%) 0%, hsl(340 60% 32%) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(236 33% 97%) 0%, hsl(236 25% 93%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(214 67% 10%) 0%, hsl(214 55% 18%) 50%, hsl(214 45% 22%) 100%);
+
+    /* Shadows */
+    --shadow-card: 0 1px 3px hsl(214 67% 10% / 0.08), 0 4px 12px hsl(214 67% 10% / 0.06);
+    --shadow-elevated: 0 4px 16px hsl(214 67% 10% / 0.12), 0 1px 4px hsl(214 67% 10% / 0.08);
+    --shadow-navy: 0 8px 32px hsl(214 67% 14% / 0.24);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  h4, h5, h6, .font-display {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  /* ── Sidebar Shell ── */
+  .sidebar-shell {
+    background: var(--gradient-primary);
+    border-right: 1px solid hsl(var(--sidebar-border));
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150;
+    color: hsl(var(--sidebar-foreground));
+  }
+
+  .sidebar-item:hover {
+    background: hsl(var(--sidebar-accent));
+    color: hsl(0 0% 98%);
+  }
+
+  .sidebar-item.active {
+    background: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-primary));
+    border-left: 3px solid hsl(var(--sidebar-primary));
+    padding-left: calc(0.75rem - 3px);
+  }
+
+  /* ── Stat Cards ── */
+  .stat-card {
+    @apply bg-card rounded-xl p-5 border border-border;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .stat-card:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-1px);
+  }
+
+  /* ── Status Badges ── */
+  .badge-success {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+    background: hsl(var(--success-light));
+    color: hsl(var(--success));
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+    background: hsl(var(--warning-light));
+    color: hsl(36 100% 36%);
+  }
+
+  .badge-error {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+    background: hsl(var(--error-light));
+    color: hsl(var(--error));
+  }
+
+  .badge-info {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+    background: hsl(var(--info-light));
+    color: hsl(224 100% 38%);
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+    background: hsl(236 25% 90%);
+    color: hsl(214 18% 40%);
+  }
+
+  /* ── Data Table ── */
+  .data-table-header {
+    @apply text-xs font-semibold uppercase tracking-wider;
+    color: hsl(var(--muted-foreground));
+    background: hsl(236 25% 97%);
+  }
+
+  .data-table-row {
+    @apply border-b border-border transition-colors duration-100;
+  }
+
+  .data-table-row:hover {
+    background: hsl(236 33% 98%);
+  }
+
+  /* ── Upload Zone ── */
+  .upload-zone {
+    @apply border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200;
+    border-color: hsl(var(--border));
+    background: hsl(236 33% 98%);
+  }
+
+  .upload-zone:hover,
+  .upload-zone.drag-over {
+    border-color: hsl(var(--accent));
+    background: hsl(340 56% 40% / 0.04);
+  }
+
+  /* ── Progress bar ── */
+  .validation-progress {
+    @apply h-1.5 rounded-full overflow-hidden;
+    background: hsl(var(--muted));
+  }
+
+  .validation-progress-bar {
+    @apply h-full rounded-full transition-all duration-500;
+    background: var(--gradient-accent);
+  }
+
+  /* ── Page Header ── */
+  .page-header {
+    @apply pb-5 mb-6 border-b border-border;
+  }
+
+  /* ── API Connector Card ── */
+  .connector-card {
+    @apply bg-card border border-border rounded-xl p-5 transition-all duration-200;
+    box-shadow: var(--shadow-card);
+  }
+
+  .connector-card:hover {
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: var(--shadow-elevated);
+  }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+
+/* ── Animations ── */
+@keyframes slide-in-from-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up { animation: fade-up 0.35s ease-out both; }
+.animate-fade-in { animation: fade-up 0.35s ease-out both; }
+.animate-slide-in { animation: slide-in-from-right 0.25s ease-out both; }
