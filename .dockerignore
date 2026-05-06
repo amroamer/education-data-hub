@@ -1,0 +1,40 @@
+# Dependencies — installed fresh inside the container
+node_modules
+npm-debug.log*
+
+# Build output — produced inside the container
+dist
+dist-ssr
+*.local
+
+# Editor & OS junk
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment files — never bake into images
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+playwright-report
+test-results
+coverage
+.pytest_cache
+.cache
+
+# CI / docs that don't need to be in the image
+.github
+README.md
+CLAUDE.md
+
+# Lock files we don't use (project uses npm, ignore bun's)
+bun.lock
+bun.lockb

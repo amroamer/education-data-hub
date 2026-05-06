@@ -9,9 +9,7 @@ data submission and marketplace platform (KHDA / Dubai private schools as
 the demo domain). Single-page React app, no backend; all data is mocked
 inline in page files.
 
-Originally generated via [Lovable](https://lovable.dev) — `lovable-tagger`
-is still wired into `vite.config.ts` (dev-only) and `playwright.config.ts`
-imports `lovable-agent-playwright-config`.
+Built with Vite + React + shadcn/ui.
 
 ## Stack
 
@@ -27,13 +25,13 @@ imports `lovable-agent-playwright-config`.
 ## Commands
 
 Use **Bun** as the package manager — `bun.lock` and `bun.lockb` are committed.
-A `package-lock.json` is also present (legacy from Lovable); prefer `bun`.
+A `package-lock.json` is also present; prefer `bun`.
 
 ```bash
 bun install           # install deps
 bun dev               # dev server on http://localhost:8080
 bun run build         # production build → dist/
-bun run build:dev     # dev-mode build (keeps lovable-tagger)
+bun run build:dev     # dev-mode build
 bun run lint          # eslint
 bun test              # vitest run
 bun run test:watch    # vitest watch
@@ -57,8 +55,7 @@ All routes nest under one `AppLayout` (sidebar + topbar shell):
 | `/institutions` | `pages/Institutions.tsx`          |
 | `*`             | `pages/NotFound.tsx`              |
 
-`pages/Index.tsx` exists but is unrouted — likely dead code from the
-Lovable scaffold.
+`pages/Index.tsx` exists but is unrouted — likely dead code.
 
 ### Role system — `src/contexts/RoleContext.tsx`
 The app has two demo personas, switchable via `useRole()`:
@@ -107,15 +104,10 @@ that call `onNext`-style callbacks; `UploadPortal` owns all state.
 
 - **Two lockfiles** (`bun.lock` + `package-lock.json`) — don't commit
   changes to both. Prefer Bun.
-- **`lovable-tagger`** runs only in dev mode (`mode === "development"`
-  guard in `vite.config.ts`). Don't remove without checking — the
-  Lovable web editor uses it for component tagging.
 - **`hmr.overlay: false`** is set in `vite.config.ts` — HMR errors won't
   show as a browser overlay. Watch the terminal/console.
 - **`SidebarProvider defaultOpen={false}`** in `AppLayout.tsx` — the
   sidebar is collapsed by default.
-- **Boilerplate not yet customized**: `README.md` has only a TODO,
-  `index.html` still says "Lovable App", OG tags point to lovable.dev.
 - **Not all dependencies are used yet** — `react-hook-form`, `zod`,
   `TanStack Query`, `embla-carousel`, etc. are installed but the
   prototype doesn't exercise them.
@@ -125,9 +117,8 @@ that call `onNext`-style callbacks; `UploadPortal` owns all state.
 - Vitest config (`vitest.config.ts`) uses jsdom and includes
   `src/**/*.{test,spec}.{ts,tsx}`. Setup file is `src/test/setup.ts`.
 - The only existing test is `src/test/example.test.ts` (placeholder).
-- Playwright config delegates to `lovable-agent-playwright-config` —
-  inspect that package's defaults before adding e2e tests, and override
-  `baseURL` if your dev server isn't on the assumed port.
+- Playwright config is in `playwright.config.ts` with `baseURL` set to
+  `http://localhost:8080/khdaDataHub`.
 
 ## What's likely next
 

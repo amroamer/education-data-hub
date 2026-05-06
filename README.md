@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# KHDA Education Data Hub
 
-TODO: Document your project here
+Frontend prototype for a regulator/institution data submission and marketplace platform.

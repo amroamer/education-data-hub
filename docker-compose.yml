@@ -1,0 +1,40 @@
+# education-data-hub — local development compose
+# Runs the Vite dev server in a container with hot reload.
+# Joins kpmg-network as an alias so the future backend (and other apps)
+# can reach it by container name, mirroring the kpmg-infra pattern.
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: khda-datahub-frontend
+    command: npm run dev -- --host 0.0.0.0 --port 8080
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    volumes:
+      # Hot reload: mount source. node_modules stays inside the container.
+      - .:/app
+      - /app/node_modules
+    environment:
+      # Local dev — no base prefix, app served at root.
+      - VITE_BASE=/
+    networks:
+      datahub-network:
+      kpmg-network:
+        aliases:
+          - khda-datahub-frontend
+    restart: unless-stopped
+
+networks:
+  # Internal: app-only; future backend/db will join this.
+  datahub-network:
+    driver: bridge
+  # Shared external: cross-app reachability via stable aliases.
+  # Created by `kpmg-infra`'s root compose. If running this app standalone
+  # without kpmg-infra running, create the network first with:
+  #   docker network create kpmg-infra_kpmg-network
+  kpmg-network:
+    external: true
+    name: kpmg-infra_kpmg-network
