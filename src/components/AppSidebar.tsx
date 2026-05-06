@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, ShoppingBag, Upload, Plug, Building2,
-  GraduationCap, Shield, ChevronRight,
+  GraduationCap, Shield, ChevronRight, Settings,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarHeader,
@@ -17,7 +17,7 @@ const regulatorNav = [
   { to: "/marketplace", label: "Data Catalog", icon: ShoppingBag },
   { to: "/institutions", label: "Schools", icon: Building2 },
   { to: "/connectors", label: "Connectors", icon: Plug },
-  { to: "/upload", label: "Upload Portal", icon: Upload },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 const institutionNav = [
@@ -25,6 +25,7 @@ const institutionNav = [
   { to: "/upload", label: "Submit Data", icon: Upload },
   { to: "/marketplace", label: "Browse Datasets", icon: ShoppingBag },
   { to: "/connectors", label: "My Connectors", icon: Plug },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 const AppSidebar = () => {

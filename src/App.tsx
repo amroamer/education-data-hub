@@ -9,6 +9,7 @@ import DataMarketplace from "@/pages/DataMarketplace";
 import UploadPortal from "@/pages/UploadPortal";
 import APIConnectors from "@/pages/APIConnectors";
 import Institutions from "@/pages/Institutions";
+import Settings from "@/pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="upload" element={<UploadPortal />} />
             <Route path="connectors" element={<APIConnectors />} />
             <Route path="institutions" element={<Institutions />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

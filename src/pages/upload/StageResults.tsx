@@ -1,35 +1,73 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-  CheckCircle2, XCircle, AlertTriangle, Info, FileText, Download,
-  Table, TrendingUp, ShieldCheck, Filter, ArrowUpRight, RotateCcw,
+  CheckCircle2, XCircle, AlertTriangle, Info, Download,
+  Table, TrendingUp, ShieldCheck, Filter, ArrowUpRight, RotateCcw, Sparkles,
+  Loader2, Database,
 } from "lucide-react";
 import { MOCK_ISSUES, QUALITY_DIMENSIONS } from "./data";
+import type { ValidationResults } from "./types";
 
 interface StageResultsProps {
   fileName: string;
   templateLabel: string;
+  validationResults: ValidationResults | null;
   onReset: () => void;
 }
 
-const TOTAL_ROWS = 1284;
-const ERRORS = MOCK_ISSUES.filter(i => i.severity === "error").length;
-const WARNINGS = MOCK_ISSUES.filter(i => i.severity === "warning").length;
-const INFOS = MOCK_ISSUES.filter(i => i.severity === "info").length;
-const PASSED = TOTAL_ROWS - ERRORS;
-const PASS_RATE = Math.round((PASSED / TOTAL_ROWS) * 100);
-
 type FilterType = "all" | "error" | "warning" | "info";
+type TabType = "summary" | "issues" | "quality" | "remediation";
 
-export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsProps) => {
+export const StageResults = ({ fileName, templateLabel, validationResults, onReset }: StageResultsProps) => {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [activeTab, setActiveTab] = useState<"issues" | "quality" | "summary">("summary");
+  const [activeTab, setActiveTab] = useState<TabType>("summary");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = () => {
+    setSubmitting(true);
+    // Simulate submission to database
+    setTimeout(() => {
+      setSubmitting(false);
+      setSubmitted(true);
+    }, 2000);
+  };
+
+  // Derive all values from validationResults, falling back to mock data
+  const results = validationResults ?? {
+    issues: MOCK_ISSUES,
+    qualityDimensions: QUALITY_DIMENSIONS,
+    remediations: [],
+    totalRows: 1284,
+    summary: "",
+  };
+
+  const TOTAL_ROWS = results.totalRows;
+  const issues = results.issues;
+  const ERRORS = issues.filter(i => i.severity === "error").length;
+  const WARNINGS = issues.filter(i => i.severity === "warning").length;
+  const INFOS = issues.filter(i => i.severity === "info").length;
+  // Count unique rows with errors (not total error count, since one row can have multiple errors)
+  const errorRows = new Set(issues.filter(i => i.severity === "error").map(i => i.row)).size;
+  const warningRows = new Set(issues.filter(i => i.severity === "warning").map(i => i.row)).size;
+  const PASSED = Math.max(0, TOTAL_ROWS - errorRows);
+  const PASS_RATE = TOTAL_ROWS > 0 ? Math.round((PASSED / TOTAL_ROWS) * 100) : 0;
+  const overallQuality = results.qualityDimensions.length > 0
+    ? Math.round(results.qualityDimensions.reduce((sum, d) => sum + d.score, 0) / results.qualityDimensions.length)
+    : 0;
 
   const filteredIssues = activeFilter === "all"
-    ? MOCK_ISSUES
-    : MOCK_ISSUES.filter(i => i.severity === activeFilter);
+    ? issues
+    : issues.filter(i => i.severity === activeFilter);
 
-  const overallQuality = Math.round(QUALITY_DIMENSIONS.reduce((sum, d) => sum + d.score, 0) / QUALITY_DIMENSIONS.length);
+  const tabs = [
+    { key: "summary" as const, label: "Quality Summary" },
+    { key: "issues" as const, label: `Issues (${issues.length})` },
+    { key: "quality" as const, label: "Quality Dimensions" },
+    ...(results.remediations.length > 0
+      ? [{ key: "remediation" as const, label: `Remediation (${results.remediations.length})` }]
+      : []),
+  ];
 
   return (
     <div className="space-y-4 animate-fade-up">
@@ -53,29 +91,72 @@ export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsP
             {PASS_RATE >= 95 ? "✓ Excellent data quality — ready to submit" : PASS_RATE >= 80 ? "⚠ Acceptable — review warnings before submitting" : "✕ Below threshold — resolve critical errors"}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            {fileName} · {templateLabel} · {TOTAL_ROWS.toLocaleString()} records · {ERRORS} errors · {WARNINGS} warnings
+            {fileName} · {templateLabel} · {TOTAL_ROWS.toLocaleString()} records · {ERRORS} issues ({errorRows} rows with errors) · {WARNINGS} warnings
           </div>
         </div>
         <div className="flex gap-2">
           <button className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-border bg-white hover:bg-muted/50 transition-colors">
             <Download className="w-3.5 h-3.5" /> Export Report
           </button>
-          {PASS_RATE >= 80 && (
-            <button className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:brightness-110"
+          {!submitted && PASS_RATE >= 80 && (
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:brightness-110 disabled:opacity-70"
               style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}>
-              Submit Data <ArrowUpRight className="w-3.5 h-3.5" />
+              {submitting ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Submitting...</>
+              ) : (
+                <>Submit Data <ArrowUpRight className="w-3.5 h-3.5" /></>
+              )}
             </button>
           )}
         </div>
       </div>
 
+      {/* Submission confirmation */}
+      {submitted && (
+        <div className="rounded-xl p-5 border animate-fade-up"
+          style={{ background: "hsl(152 55% 95%)", borderColor: "hsl(152 69% 31% / 0.3)" }}>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "hsl(var(--success))" }}>
+              <Database className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold text-foreground">Data submitted successfully</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {TOTAL_ROWS.toLocaleString()} records from <strong>{fileName}</strong> have been submitted to the KHDA data platform
+                as <strong>{templateLabel}</strong>. Submission ID: <span className="font-mono">SUB-{Date.now().toString(36).toUpperCase()}</span>
+              </div>
+            </div>
+            <button
+              onClick={onReset}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-border bg-white hover:bg-muted/50 transition-colors flex-shrink-0">
+              <RotateCcw className="w-3.5 h-3.5" /> New Submission
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* AI summary banner */}
+      {results.summary && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg border border-border"
+          style={{ background: "hsl(224 100% 97%)", borderColor: "hsl(224 100% 88%)" }}>
+          <Sparkles className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "hsl(224 100% 38%)" }} />
+          <span className="text-xs leading-relaxed" style={{ color: "hsl(224 100% 30%)" }}>
+            {results.summary}
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-5 gap-3">
         {[
-          { label: "Total Records", value: TOTAL_ROWS.toLocaleString(), icon: Table, color: "text-primary", bg: "hsl(340 52% 88%)", iconColor: "hsl(340 56% 40%)" },
-          { label: "Passed", value: PASSED.toLocaleString(), icon: CheckCircle2, color: "", bg: "hsl(152 55% 92%)", iconColor: "hsl(var(--success))" },
-          { label: "Errors", value: ERRORS.toString(), icon: XCircle, color: "", bg: "hsl(0 86% 94%)", iconColor: "hsl(var(--error))" },
-          { label: "Warnings", value: WARNINGS.toString(), icon: AlertTriangle, color: "", bg: "hsl(43 100% 92%)", iconColor: "hsl(36 100% 36%)" },
-          { label: "Data Quality", value: `${overallQuality}%`, icon: ShieldCheck, color: "", bg: "hsl(224 100% 91%)", iconColor: "hsl(224 100% 38%)" },
+          { label: "Total Records", value: TOTAL_ROWS.toLocaleString(), icon: Table, bg: "hsl(340 52% 88%)", iconColor: "hsl(340 56% 40%)" },
+          { label: "Passed", value: PASSED.toLocaleString(), icon: CheckCircle2, bg: "hsl(152 55% 92%)", iconColor: "hsl(var(--success))" },
+          { label: "Errors", value: ERRORS.toString(), icon: XCircle, bg: "hsl(0 86% 94%)", iconColor: "hsl(var(--error))" },
+          { label: "Warnings", value: WARNINGS.toString(), icon: AlertTriangle, bg: "hsl(43 100% 92%)", iconColor: "hsl(36 100% 36%)" },
+          { label: "Data Quality", value: `${overallQuality}%`, icon: ShieldCheck, bg: "hsl(224 100% 91%)", iconColor: "hsl(224 100% 38%)" },
         ].map((item) => (
           <div key={item.label} className="bg-card border border-border rounded-xl p-3.5"
             style={{ boxShadow: "var(--shadow-card)" }}>
@@ -89,14 +170,10 @@ export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsP
       </div>
 
       <div className="flex gap-0 border-b border-border">
-        {[
-          { key: "summary", label: "Quality Summary" },
-          { key: "issues", label: `Issues (${MOCK_ISSUES.length})` },
-          { key: "quality", label: "Quality Dimensions" },
-        ].map(tab => (
+        {tabs.map(tab => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key as typeof activeTab)}
+            onClick={() => setActiveTab(tab.key)}
             className={cn(
               "px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors",
               activeTab === tab.key
@@ -118,19 +195,23 @@ export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsP
               <div className="text-xs text-muted-foreground">{TOTAL_ROWS.toLocaleString()} total</div>
             </div>
             <div className="flex h-3 rounded-full overflow-hidden gap-0.5 mb-3">
-              <div className="transition-all" style={{ width: `${(PASSED / TOTAL_ROWS) * 100}%`, background: "hsl(var(--success))" }} />
-              <div className="transition-all" style={{ width: `${(WARNINGS / TOTAL_ROWS) * 100}%`, background: "hsl(36 100% 50%)" }} />
-              <div className="transition-all" style={{ width: `${(ERRORS / TOTAL_ROWS) * 100}%`, background: "hsl(var(--error))" }} />
+              {TOTAL_ROWS > 0 && (
+                <>
+                  <div className="transition-all" style={{ width: `${(PASSED / TOTAL_ROWS) * 100}%`, background: "hsl(var(--success))" }} />
+                  <div className="transition-all" style={{ width: `${(warningRows / TOTAL_ROWS) * 100}%`, background: "hsl(36 100% 50%)" }} />
+                  <div className="transition-all" style={{ width: `${(errorRows / TOTAL_ROWS) * 100}%`, background: "hsl(var(--error))" }} />
+                </>
+              )}
             </div>
             <div className="flex gap-4">
               {[
                 { label: "Passed", count: PASSED, color: "hsl(var(--success))" },
-                { label: "Warnings", count: WARNINGS, color: "hsl(36 100% 50%)" },
-                { label: "Errors", count: ERRORS, color: "hsl(var(--error))" },
+                { label: "Warnings", count: `${warningRows} rows (${WARNINGS} issues)`, color: "hsl(36 100% 50%)" },
+                { label: "Errors", count: `${errorRows} rows (${ERRORS} issues)`, color: "hsl(var(--error))" },
               ].map(item => (
                 <div key={item.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <div className="w-2.5 h-2.5 rounded-sm" style={{ background: item.color }} />
-                  {item.label}: <strong className="text-foreground">{item.count.toLocaleString()}</strong>
+                  {item.label}: <strong className="text-foreground">{typeof item.count === "number" ? item.count.toLocaleString() : item.count}</strong>
                 </div>
               ))}
             </div>
@@ -139,7 +220,7 @@ export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsP
           <div className="bg-card border border-border rounded-xl p-5" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="text-xs font-semibold text-foreground mb-3">Error Distribution by Field</div>
             {Object.entries(
-              MOCK_ISSUES.filter(i => i.severity === "error").reduce((acc, i) => {
+              issues.filter(i => i.severity === "error").reduce((acc, i) => {
                 acc[i.field] = (acc[i.field] || 0) + 1;
                 return acc;
               }, {} as Record<string, number>)
@@ -148,7 +229,7 @@ export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsP
                 <div className="text-xs text-foreground w-36 flex-shrink-0 font-medium">{field}</div>
                 <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "hsl(var(--muted))" }}>
                   <div className="h-full rounded-full transition-all"
-                    style={{ width: `${(count / ERRORS) * 100}%`, background: "hsl(var(--error))" }} />
+                    style={{ width: `${(count / Math.max(ERRORS, 1)) * 100}%`, background: "hsl(var(--error))" }} />
                 </div>
                 <div className="text-xs text-muted-foreground w-8 text-right">{count}</div>
               </div>
@@ -196,7 +277,7 @@ export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsP
                 )}
                 style={activeFilter === f && f === "all" ? { backgroundColor: "hsl(var(--primary))", color: "white" } : {}}
               >
-                {f === "all" ? `All (${MOCK_ISSUES.length})` : f === "error" ? `Errors (${ERRORS})` : f === "warning" ? `Warnings (${WARNINGS})` : `Info (${INFOS})`}
+                {f === "all" ? `All (${issues.length})` : f === "error" ? `Errors (${ERRORS})` : f === "warning" ? `Warnings (${WARNINGS})` : `Info (${INFOS})`}
               </button>
             ))}
           </div>
@@ -250,7 +331,7 @@ export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsP
       {activeTab === "quality" && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            {QUALITY_DIMENSIONS.map(dim => (
+            {results.qualityDimensions.map(dim => (
               <div key={dim.name} className="bg-card border border-border rounded-xl p-4"
                 style={{ boxShadow: "var(--shadow-card)" }}>
                 <div className="flex items-center justify-between mb-2">
@@ -297,11 +378,52 @@ export const StageResults = ({ fileName, templateLabel, onReset }: StageResultsP
                     style={{ width: `${overallQuality}%`, background: "var(--gradient-accent)" }} />
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-1">
-                  Composite score across 6 data quality dimensions · KHDA threshold: 90%
+                  Composite score across {results.qualityDimensions.length} data quality dimensions · KHDA threshold: 90%
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === "remediation" && results.remediations.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border"
+            style={{ background: "hsl(224 100% 97%)", borderColor: "hsl(224 100% 88%)" }}>
+            <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(224 100% 38%)" }} />
+            <span className="text-xs" style={{ color: "hsl(224 100% 30%)" }}>
+              <strong>AI-generated fix suggestions</strong> — review each recommendation before applying.
+            </span>
+          </div>
+
+          {results.remediations.map((rem, i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-4"
+              style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-mono text-muted-foreground">Row #{rem.row}</span>
+                <span className="text-xs font-semibold text-foreground">{rem.field}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div>
+                  <div className="text-[10px] text-muted-foreground mb-0.5">Current Value</div>
+                  <div className="text-xs font-mono px-2 py-1 rounded"
+                    style={{ background: "hsl(0 86% 97%)", color: "hsl(0 72% 45%)" }}>
+                    {rem.currentValue || <span className="italic text-muted-foreground">empty</span>}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground mb-0.5">Suggested Value</div>
+                  <div className="text-xs font-mono px-2 py-1 rounded"
+                    style={{ background: "hsl(152 55% 95%)", color: "hsl(152 69% 25%)" }}>
+                    {rem.suggestedValue || <span className="italic text-muted-foreground">no suggestion</span>}
+                  </div>
+                </div>
+              </div>
+              <div className="text-[11px] text-muted-foreground leading-relaxed">
+                {rem.explanation}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

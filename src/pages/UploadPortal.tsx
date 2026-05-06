@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { RotateCcw } from "lucide-react";
-import { Stage, MappedColumn } from "./upload/types";
+import { Stage, MappedColumn, ValidationResults, ParsedFileData } from "./upload/types";
 import { DATA_TEMPLATES } from "./upload/data";
 import { StageProgress } from "./upload/StageProgress";
 import { StageSelect } from "./upload/StageSelect";
@@ -13,14 +13,18 @@ const UploadPortal = () => {
   const [stage, setStage] = useState<Stage>("select");
   const [selectedTemplate, setSelectedTemplate] = useState("enrollment");
   const [fileName, setFileName] = useState("");
+  const [parsedFileData, setParsedFileData] = useState<ParsedFileData | null>(null);
   const [mapping, setMapping] = useState<MappedColumn[]>([]);
+  const [validationResults, setValidationResults] = useState<ValidationResults | null>(null);
 
   const template = DATA_TEMPLATES.find(t => t.id === selectedTemplate)!;
 
   const reset = useCallback(() => {
     setStage("select");
     setFileName("");
+    setParsedFileData(null);
     setMapping([]);
+    setValidationResults(null);
   }, []);
 
   return (
@@ -58,8 +62,9 @@ const UploadPortal = () => {
       {stage === "upload" && (
         <StageUpload
           templateLabel={template.label}
-          onFileSelected={(name) => {
+          onFileSelected={(name, parsedData) => {
             setFileName(name);
+            setParsedFileData(parsedData);
             setStage("mapping");
           }}
         />
@@ -69,9 +74,15 @@ const UploadPortal = () => {
         <StageMapping
           template={template}
           fileName={fileName}
+          parsedFileData={parsedFileData}
           onRunValidation={(m) => {
             setMapping(m);
             setStage("validating");
+          }}
+          onBack={() => {
+            setParsedFileData(null);
+            setFileName("");
+            setStage("upload");
           }}
         />
       )}
@@ -80,8 +91,13 @@ const UploadPortal = () => {
         <StageValidating
           fileName={fileName}
           templateLabel={template.label}
-          totalRows={1284}
-          onComplete={() => setStage("results")}
+          template={template}
+          mapping={mapping}
+          totalRows={parsedFileData?.totalRows ?? 1284}
+          onComplete={(results) => {
+            setValidationResults(results);
+            setStage("results");
+          }}
         />
       )}
 
@@ -89,6 +105,7 @@ const UploadPortal = () => {
         <StageResults
           fileName={fileName}
           templateLabel={template.label}
+          validationResults={validationResults}
           onReset={reset}
         />
       )}

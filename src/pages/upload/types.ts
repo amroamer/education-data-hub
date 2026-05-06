@@ -41,3 +41,25 @@ export interface QualityDimension {
   issueCount: number;
   description: string;
 }
+
+export interface RemediationSuggestion {
+  row: number;
+  field: string;
+  currentValue: string;
+  suggestedValue: string;
+  explanation: string;
+}
+
+export interface ValidationResults {
+  issues: ValidationIssue[];
+  qualityDimensions: QualityDimension[];
+  remediations: RemediationSuggestion[];
+  totalRows: number;
+  summary: string;
+}
+
+export interface ParsedFileData {
+  headers: string[];
+  sampleRows: Record<string, string>[];
+  totalRows: number;
+}

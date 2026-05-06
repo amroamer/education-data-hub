@@ -3,10 +3,12 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
 import TopBar from "@/components/TopBar";
 import { RoleProvider } from "@/contexts/RoleContext";
+import { LLMProvider } from "@/contexts/LLMContext";
 
 const AppLayout = () => {
   return (
     <RoleProvider>
+      <LLMProvider>
       <SidebarProvider defaultOpen={false}>
         <div className="min-h-screen flex w-full bg-background">
           <AppSidebar />
@@ -18,6 +20,7 @@ const AppLayout = () => {
           </div>
         </div>
       </SidebarProvider>
+      </LLMProvider>
     </RoleProvider>
   );
 };

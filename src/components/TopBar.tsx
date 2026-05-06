@@ -10,6 +10,7 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
   "/upload": { title: "Submit Data", subtitle: "" },
   "/connectors": { title: "Connectors", subtitle: "" },
   "/institutions": { title: "Schools", subtitle: "" },
+  "/settings": { title: "Settings", subtitle: "" },
 };
 
 const TopBar = () => {

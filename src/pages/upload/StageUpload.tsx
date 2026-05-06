@@ -1,29 +1,109 @@
 import { useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Upload, FileSpreadsheet, X, AlertCircle, CheckCircle2, FileWarning } from "lucide-react";
+import { Upload, FileSpreadsheet, X, AlertCircle, CheckCircle2, FileWarning, Loader2 } from "lucide-react";
+import * as XLSX from "xlsx";
+import type { ParsedFileData } from "./types";
 
 interface StageUploadProps {
-  onFileSelected: (name: string) => void;
+  onFileSelected: (name: string, parsedData: ParsedFileData) => void;
   templateLabel: string;
+}
+
+function parseFile(file: File): Promise<ParsedFileData> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array", cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+
+        // Get all rows as JSON (header row becomes keys)
+        // raw: false ensures dates are formatted as strings, not serial numbers
+        const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+          defval: "",
+          raw: false,
+        });
+
+        if (rawRows.length === 0) {
+          reject(new Error("File is empty or has no data rows"));
+          return;
+        }
+
+        const headers = Object.keys(rawRows[0]);
+
+        // Filter out completely empty rows (e.g. blank rows in templates)
+        const rows = rawRows.filter(row =>
+          Object.values(row).some(v => v !== null && v !== undefined && String(v).trim() !== "")
+        );
+
+        if (rows.length === 0) {
+          reject(new Error("File has no data rows (only empty rows found)"));
+          return;
+        }
+
+        // Take first 5 rows as samples
+        const sampleRows = rows.slice(0, 5).map((row) => {
+          const mapped: Record<string, string> = {};
+          for (const key of headers) {
+            mapped[key] = String(row[key] ?? "");
+          }
+          return mapped;
+        });
+
+        resolve({
+          headers,
+          sampleRows,
+          totalRows: rows.length,
+        });
+      } catch (err) {
+        reject(new Error("Failed to parse file. Make sure it's a valid spreadsheet."));
+      }
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsArrayBuffer(file);
+  });
 }
 
 export const StageUpload = ({ onFileSelected, templateLabel }: StageUploadProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState<string>("");
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback((name: string, size?: number) => {
-    setSelectedFile(name);
-    if (size) {
-      const kb = size / 1024;
-      setFileSize(kb < 1024 ? `${kb.toFixed(0)} KB` : `${(kb / 1024).toFixed(1)} MB`);
-    } else {
-      setFileSize("2.4 MB");
-    }
+  const handleFile = useCallback((file: File) => {
+    setSelectedFile(file);
+    setFileName(file.name);
+    setParseError(null);
+    const kb = file.size / 1024;
+    setFileSize(kb < 1024 ? `${kb.toFixed(0)} KB` : `${(kb / 1024).toFixed(1)} MB`);
   }, []);
 
-  const isValid = selectedFile && (selectedFile.endsWith(".xlsx") || selectedFile.endsWith(".xls") || selectedFile.endsWith(".csv"));
+  const handleUpload = useCallback(async () => {
+    if (!selectedFile || !fileName) return;
+    setIsParsing(true);
+    setParseError(null);
+    try {
+      const parsedData = await parseFile(selectedFile);
+      onFileSelected(fileName, parsedData);
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : "Failed to parse file");
+    } finally {
+      setIsParsing(false);
+    }
+  }, [selectedFile, fileName, onFileSelected]);
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    setFileName(null);
+    setParseError(null);
+  };
+
+  const isValid = fileName && (fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv"));
 
   return (
     <div className="space-y-4 animate-fade-up">
@@ -35,32 +115,32 @@ export const StageUpload = ({ onFileSelected, templateLabel }: StageUploadProps)
           e.preventDefault();
           setIsDragOver(false);
           const file = e.dataTransfer.files[0];
-          if (file) handleFile(file.name, file.size);
+          if (file) handleFile(file);
         }}
         className={cn(
           "border-2 border-dashed rounded-xl p-10 text-center transition-all duration-200 cursor-pointer",
           isDragOver && "scale-[1.01]",
-          selectedFile ? "border-success" : isDragOver ? "border-accent" : "border-border",
+          fileName ? "border-success" : isDragOver ? "border-accent" : "border-border",
         )}
-        style={selectedFile
+        style={fileName
           ? { background: "hsl(152 55% 97%)", borderColor: "hsl(var(--success))" }
           : isDragOver
           ? { background: "hsl(43 96% 56% / 0.05)", borderColor: "hsl(var(--accent))" }
           : { background: "hsl(220 26% 98.5%)" }}
-        onClick={() => !selectedFile && fileRef.current?.click()}
+        onClick={() => !fileName && fileRef.current?.click()}
       >
-        {selectedFile ? (
+        {fileName ? (
           <div className="flex flex-col items-center gap-3">
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
               style={{ background: "hsl(152 55% 90%)" }}>
               <FileSpreadsheet className="w-7 h-7" style={{ color: "hsl(var(--success))" }} />
             </div>
             <div>
-              <div className="font-semibold text-foreground text-sm">{selectedFile}</div>
+              <div className="font-semibold text-foreground text-sm">{fileName}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{fileSize} · Ready to upload</div>
             </div>
             <button
-              onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+              onClick={(e) => { e.stopPropagation(); clearFile(); }}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-error transition-colors"
             >
               <X className="w-3.5 h-3.5" /> Remove
@@ -91,10 +171,19 @@ export const StageUpload = ({ onFileSelected, templateLabel }: StageUploadProps)
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) handleFile(file.name, file.size);
+            if (file) handleFile(file);
           }}
         />
       </div>
+
+      {/* Parse error */}
+      {parseError && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border"
+          style={{ background: "hsl(0 86% 97%)", borderColor: "hsl(0 72% 51% / 0.3)" }}>
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--error))" }} />
+          <span className="text-xs" style={{ color: "hsl(0 72% 40%)" }}>{parseError}</span>
+        </div>
+      )}
 
       {/* Requirements panel */}
       <div className="grid grid-cols-3 gap-3">
@@ -127,12 +216,18 @@ export const StageUpload = ({ onFileSelected, templateLabel }: StageUploadProps)
       {/* CTA */}
       <div className="flex justify-end">
         <button
-          onClick={() => selectedFile && onFileSelected(selectedFile)}
-          disabled={!isValid}
+          onClick={handleUpload}
+          disabled={!isValid || isParsing}
           className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}
         >
-          Upload & Continue
+          {isParsing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> Parsing file...
+            </>
+          ) : (
+            "Upload & Continue"
+          )}
         </button>
       </div>
     </div>

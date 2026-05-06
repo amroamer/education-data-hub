@@ -106,3 +106,48 @@ export const QUALITY_DIMENSIONS = [
   { name: "Uniqueness", score: 100, issueCount: 0, description: "No duplicate records found" },
   { name: "Referential Integrity", score: 89, issueCount: 2, description: "IDs match KHDA registered entities" },
 ];
+
+export const SAMPLE_SOURCE_DATA: Record<string, Record<string, string[]>> = {
+  enrollment: {
+    student_id: ["STU-001234", "STU-001235", "STU-001236"],
+    name: ["Ahmed Al-Mansouri", "Fatima Hassan", "James Wilson"],
+    sex: ["M", "F", "M"],
+    DOB: ["2010-04-15", "2009-11-02", "2008-06-30"],
+    nationality_code: ["ARE", "IND", "GBR"],
+    grade: ["Grade 7", "Grade 7", "Grade 8"],
+    enroll_date: ["2024-09-01", "2024-09-01", "2023-09-01"],
+    school_id: ["SCH-0042", "SCH-0042", "SCH-0042"],
+    sen_type: ["None", "Learning", "None"],
+    curriculum: ["British", "IB", "American"],
+  },
+  staff: {
+    staff_no: ["STF-0092", "STF-0093", "STF-0094"],
+    staff_name: ["Sarah Johnson", "Mohammed Ali", "Elena Torres"],
+    highest_qual: ["Masters", "PhD", "Bachelor"],
+    dept: ["Mathematics", "Science", "English"],
+    emp_status: ["Full-time", "Full-time", "Part-time"],
+    exp_years: ["8", "12", "3"],
+    license_no: ["LIC-20240892", "LIC-20230155", "LIC-20240601"],
+    license_exp: ["2026-06-30", "2025-12-31", "2026-09-15"],
+  },
+  performance: {
+    stu_id: ["STU-001234", "STU-001235", "STU-001236"],
+    subject: ["MATH-07", "ENG-07", "SCI-08"],
+    test_type: ["Final Exam", "Midterm", "Quiz"],
+    marks: ["87", "92", "45"],
+    total_marks: ["100", "100", "50"],
+    acad_year: ["2024-2025", "2024-2025", "2024-2025"],
+    term: ["Term 1", "Term 1", "Term 2"],
+    grade_letter: ["B+", "A", "C"],
+  },
+  infrastructure: {
+    school_id: ["SCH-0042", "SCH-0043", "SCH-0042"],
+    building_code: ["BLD-003", "BLD-001", "BLD-007"],
+    bldg_name: ["Science Block A", "Main Hall", "Sports Complex"],
+    student_cap: ["240", "500", "120"],
+    cond_index: ["78", "92", "65"],
+    last_inspect: ["2024-03-10", "2024-01-15", "2023-11-20"],
+    wheelchair_access: ["Y", "Y", "N"],
+    fire_cert: ["Y", "Y", "Pending"],
+  },
+};

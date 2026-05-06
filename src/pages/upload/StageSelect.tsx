@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { FileSpreadsheet, Info, ArrowRight, Download, CheckCircle2, Clock, RefreshCw } from "lucide-react";
+import { Info, ArrowRight, Download, CheckCircle2, Clock, RefreshCw } from "lucide-react";
 import { DataTemplate } from "./types";
 import { DATA_TEMPLATES } from "./data";
+import * as XLSX from "xlsx";
 
 interface StageSelectProps {
   selectedTemplate: string;
@@ -12,6 +13,40 @@ interface StageSelectProps {
 
 export const StageSelect = ({ selectedTemplate, onSelectTemplate, onNext }: StageSelectProps) => {
   const template = DATA_TEMPLATES.find(t => t.id === selectedTemplate)!;
+
+  const downloadTemplate = useCallback(() => {
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Data — headers + 2 example rows
+    const headers = template.columns.map(c => c.field);
+    const exampleRow = template.columns.map(c => c.example);
+    const emptyRow = template.columns.map(() => "");
+    const dataSheet = XLSX.utils.aoa_to_sheet([headers, exampleRow, emptyRow]);
+
+    // Set column widths based on header/example length
+    dataSheet["!cols"] = template.columns.map(c => ({
+      wch: Math.max(c.field.length, c.example.length, 14) + 2,
+    }));
+    XLSX.utils.book_append_sheet(wb, dataSheet, "Data");
+
+    // Sheet 2: Schema Reference — field details
+    const schemaHeaders = ["Field Name", "Type", "Required", "Validation Rule", "Example Value"];
+    const schemaRows = template.columns.map(c => [
+      c.field,
+      c.type,
+      c.required ? "Yes" : "No",
+      c.validation ?? "",
+      c.example,
+    ]);
+    const schemaSheet = XLSX.utils.aoa_to_sheet([schemaHeaders, ...schemaRows]);
+    schemaSheet["!cols"] = [
+      { wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 40 }, { wch: 20 },
+    ];
+    XLSX.utils.book_append_sheet(wb, schemaSheet, "Schema Reference");
+
+    // Trigger download
+    XLSX.writeFile(wb, `${template.label.replace(/\s+/g, "_")}_Template.xlsx`);
+  }, [template]);
 
   return (
     <div className="space-y-5 animate-fade-up">
@@ -112,7 +147,10 @@ export const StageSelect = ({ selectedTemplate, onSelectTemplate, onNext }: Stag
             Optional field
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <button className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline">
+            <button
+              onClick={downloadTemplate}
+              className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline"
+            >
               <Download className="w-3.5 h-3.5" /> Download Template (.xlsx)
             </button>
             <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
