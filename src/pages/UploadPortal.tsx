@@ -94,10 +94,12 @@ const UploadPortal = () => {
           template={template}
           mapping={mapping}
           totalRows={parsedFileData?.totalRows ?? 1284}
+          fileRows={parsedFileData?.allRows}
           onComplete={(results) => {
             setValidationResults(results);
             setStage("results");
           }}
+          onBack={() => setStage("mapping")}
         />
       )}
 
@@ -107,6 +109,10 @@ const UploadPortal = () => {
           templateLabel={template.label}
           validationResults={validationResults}
           onReset={reset}
+          onBack={() => {
+            setValidationResults(null);
+            setStage("validating");
+          }}
         />
       )}
     </div>

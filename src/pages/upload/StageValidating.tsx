@@ -2,12 +2,11 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   Shield, Database, GitBranch, CheckCircle2, Brain, Search,
-  Loader2, AlertTriangle, AlertCircle, Info, CircleDot,
+  Loader2, AlertTriangle, AlertCircle, Info, CircleDot, ArrowLeft,
 } from "lucide-react";
 import { DataTemplate, MappedColumn, ValidationResults, ValidationIssue } from "./types";
-import { MOCK_ISSUES, QUALITY_DIMENSIONS } from "./data";
 import { useOllamaAgent, type AgentStatus } from "@/hooks/useOllamaAgent";
-import { runValidationAgent, type ValidationAgentResult } from "@/lib/agents/validationAgent";
+import { runValidationAgent, runRuleBasedValidation, type ValidationAgentResult } from "@/lib/agents/validationAgent";
 import { useLLM } from "@/contexts/LLMContext";
 
 interface StageValidatingProps {
@@ -16,7 +15,9 @@ interface StageValidatingProps {
   template: DataTemplate;
   mapping: MappedColumn[];
   totalRows: number;
+  fileRows?: Record<string, string>[];
   onComplete: (results: ValidationResults) => void;
+  onBack?: () => void;
 }
 
 const VALIDATION_STEPS = [
@@ -27,20 +28,13 @@ const VALIDATION_STEPS = [
   { label: "Generating quality report", detail: "Computing quality scores and remediation suggestions", icon: Brain },
 ];
 
-function buildFallbackResults(totalRows: number): ValidationAgentResult {
-  return {
-    issues: MOCK_ISSUES,
-    qualityDimensions: QUALITY_DIMENSIONS,
-    remediations: MOCK_ISSUES.filter(i => i.severity === "error").map(i => ({
-      row: i.row,
-      field: i.field,
-      currentValue: i.value,
-      suggestedValue: "",
-      explanation: i.message,
-    })),
-    totalRows,
-    summary: `Validated ${totalRows} records with ${MOCK_ISSUES.filter(i => i.severity === "error").length} errors and ${MOCK_ISSUES.filter(i => i.severity === "warning").length} warnings.`,
-  };
+function buildFallbackResults(
+  template: DataTemplate,
+  mapping: MappedColumn[],
+  totalRows: number,
+  fileRows?: Record<string, string>[],
+): ValidationAgentResult {
+  return runRuleBasedValidation(template, mapping, totalRows, fileRows);
 }
 
 const SEVERITY_CONFIG = {
@@ -55,7 +49,9 @@ export const StageValidating = ({
   template,
   mapping,
   totalRows,
+  fileRows,
   onComplete,
+  onBack,
 }: StageValidatingProps) => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -73,13 +69,13 @@ export const StageValidating = ({
   );
 
   const fallbackFn = useCallback(
-    () => buildFallbackResults(totalRows),
-    [totalRows],
+    () => buildFallbackResults(template, mapping, totalRows, fileRows),
+    [template, mapping, totalRows, fileRows],
   );
 
   const agentFn = useCallback(
-    (model: string) => runValidationAgent(model, template, mapping, totalRows),
-    [template, mapping, totalRows],
+    (model: string) => runValidationAgent(model, template, mapping, totalRows, fileRows),
+    [template, mapping, totalRows, fileRows],
   );
 
   const onAgentSuccess = useCallback(
@@ -324,8 +320,19 @@ export const StageValidating = ({
       </div>
 
       {/* Footer */}
-      <div className="text-center text-[11px] text-muted-foreground">
-        Validating against <strong className="text-foreground">{templateLabel}</strong> schema · KHDA Regulatory Standards v2.1
+      <div className="flex items-center justify-between">
+        {onBack ? (
+          <button
+            onClick={onBack}
+            disabled={progress > 0 && progress < 100}
+            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Mapping
+          </button>
+        ) : <div />}
+        <div className="text-[11px] text-muted-foreground">
+          Validating against <strong className="text-foreground">{templateLabel}</strong> schema · KHDA Regulatory Standards v2.1
+        </div>
       </div>
     </div>
   );

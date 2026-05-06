@@ -1,4 +1,13 @@
-const OLLAMA_BASE = "http://localhost:11434";
+const URL_STORAGE_KEY = "edh-ollama-url";
+const DEFAULT_OLLAMA_URL = "/khdaDataHub/ollama";
+
+function getOllamaBase(): string {
+  try {
+    return (localStorage.getItem(URL_STORAGE_KEY) || DEFAULT_OLLAMA_URL).replace(/\/+$/, "");
+  } catch {
+    return DEFAULT_OLLAMA_URL;
+  }
+}
 
 export interface OllamaGenerateOptions {
   model: string;
@@ -27,7 +36,7 @@ export async function ollamaGenerate(
   const timer = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const res = await fetch(`${OLLAMA_BASE}/api/generate`, {
+    const res = await fetch(`${getOllamaBase()}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -95,7 +104,7 @@ export async function isOllamaAvailable(): Promise<boolean> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(`${OLLAMA_BASE}/api/tags`, {
+    const res = await fetch(`${getOllamaBase()}/api/tags`, {
       signal: controller.signal,
     });
     clearTimeout(timer);

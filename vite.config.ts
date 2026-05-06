@@ -11,6 +11,13 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/khdaDataHub/ollama": {
+        target: process.env.OLLAMA_URL || "http://ollama-shared:11434",
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/khdaDataHub\/ollama/, ""),
+      },
+    },
   },
   plugins: [react()],
   resolve: {

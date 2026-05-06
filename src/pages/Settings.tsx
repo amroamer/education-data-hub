@@ -43,7 +43,7 @@ const Settings = () => {
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">Cannot connect to Ollama</p>
               <p className="text-xs text-muted-foreground">
-                Make sure Ollama is running at http://localhost:11434
+                Make sure the Ollama service is running.
               </p>
             </div>
             <Button size="sm" variant="outline" onClick={() => refetch()}>

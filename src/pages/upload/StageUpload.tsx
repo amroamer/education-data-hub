@@ -20,10 +20,12 @@ function parseFile(file: File): Promise<ParsedFileData> {
         const sheet = workbook.Sheets[sheetName];
 
         // Get all rows as JSON (header row becomes keys)
-        // raw: false ensures dates are formatted as strings, not serial numbers
+        // raw: true keeps Date objects (from cellDates:true) intact so we can
+        // format them ourselves with 4-digit years; raw:false would let SheetJS
+        // format dates using the cell's display format which may use 2-digit years.
         const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
           defval: "",
-          raw: false,
+          raw: true,
         });
 
         if (rawRows.length === 0) {
@@ -43,18 +45,33 @@ function parseFile(file: File): Promise<ParsedFileData> {
           return;
         }
 
-        // Take first 5 rows as samples
-        const sampleRows = rows.slice(0, 5).map((row) => {
+        // Convert all rows to string-keyed records
+        // Dates parsed by SheetJS with cellDates:true become JS Date objects;
+        // String(date) would produce "Mon Apr 15 2010 ..." — convert to ISO instead.
+        const allRows = rows.map((row) => {
           const mapped: Record<string, string> = {};
           for (const key of headers) {
-            mapped[key] = String(row[key] ?? "");
+            const val = row[key];
+            if (val instanceof Date && !isNaN(val.getTime())) {
+              // Format as M/D/YYYY (no zero-padding)
+              const m = val.getMonth() + 1;
+              const d = val.getDate();
+              const y = val.getFullYear();
+              mapped[key] = `${m}/${d}/${y}`;
+            } else {
+              mapped[key] = String(val ?? "").trim();
+            }
           }
           return mapped;
         });
 
+        // Take first 5 rows as preview samples
+        const sampleRows = allRows.slice(0, 5);
+
         resolve({
           headers,
           sampleRows,
+          allRows,
           totalRows: rows.length,
         });
       } catch (err) {

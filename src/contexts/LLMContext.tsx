@@ -23,30 +23,45 @@ interface LLMContextValue {
   models: OllamaModel[];
   selectedModel: string | null;
   setSelectedModel: (name: string) => void;
+  ollamaUrl: string;
+  setOllamaUrl: (url: string) => void;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
 }
 
 const STORAGE_KEY = "edh-selected-model";
+const URL_STORAGE_KEY = "edh-ollama-url";
+const DEFAULT_OLLAMA_URL = "/khdaDataHub/ollama";
 
 const LLMContext = createContext<LLMContextValue | null>(null);
 
-async function fetchOllamaModels(): Promise<OllamaModel[]> {
-  const res = await fetch("http://localhost:11434/api/tags");
+async function fetchOllamaModels(baseUrl: string): Promise<OllamaModel[]> {
+  const url = baseUrl.replace(/\/+$/, "");
+  const res = await fetch(`${url}/api/tags`);
   if (!res.ok) throw new Error(`Ollama unreachable (${res.status})`);
   const data = await res.json();
   return data.models ?? [];
 }
 
 export const LLMProvider = ({ children }: { children: React.ReactNode }) => {
+  const [ollamaUrl, setOllamaUrlState] = useState<string>(
+    () => localStorage.getItem(URL_STORAGE_KEY) || DEFAULT_OLLAMA_URL
+  );
+
+  const setOllamaUrl = (url: string) => {
+    const trimmed = url.replace(/\/+$/, "");
+    setOllamaUrlState(trimmed);
+    localStorage.setItem(URL_STORAGE_KEY, trimmed);
+  };
+
   const [selectedModel, setSelectedModelState] = useState<string | null>(
     () => localStorage.getItem(STORAGE_KEY)
   );
 
   const { data: models = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["ollama-models"],
-    queryFn: fetchOllamaModels,
+    queryKey: ["ollama-models", ollamaUrl],
+    queryFn: () => fetchOllamaModels(ollamaUrl),
     retry: 1,
     staleTime: 30_000,
   });
@@ -68,6 +83,8 @@ export const LLMProvider = ({ children }: { children: React.ReactNode }) => {
       models,
       selectedModel,
       setSelectedModel,
+      ollamaUrl,
+      setOllamaUrl,
       isLoading,
       error: error as Error | null,
       refetch,

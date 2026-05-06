@@ -9,16 +9,78 @@ export const DATA_TEMPLATES: DataTemplate[] = [
     icon: "👨‍🎓",
     rowCount: "100–10,000",
     columns: [
-      { field: "Student ID", type: "id", required: true, example: "STU-001234", validation: "Format: STU-XXXXXX" },
-      { field: "Full Name", type: "text", required: true, example: "Ahmed Al-Mansouri", validation: "Max 120 chars" },
-      { field: "Gender", type: "enum", required: true, example: "M", validation: "M / F / U" },
-      { field: "Date of Birth", type: "date", required: true, example: "2010-04-15", validation: "ISO 8601 YYYY-MM-DD" },
-      { field: "Nationality", type: "enum", required: true, example: "ARE", validation: "ISO 3166-1 alpha-3" },
-      { field: "Grade Level", type: "enum", required: true, example: "Grade 7", validation: "Pre-K through Grade 13" },
-      { field: "Enrollment Date", type: "date", required: true, example: "2024-09-01", validation: "ISO 8601" },
-      { field: "School ID", type: "id", required: true, example: "SCH-0042", validation: "KHDA registered school" },
-      { field: "SEN Category", type: "enum", required: false, example: "None", validation: "None / Physical / Learning / Gifted / Other" },
-      { field: "Curriculum", type: "enum", required: false, example: "British", validation: "British / American / IB / Indian / MoE / Other" },
+      {
+        field: "Student ID", type: "id", required: true, example: "STU-001234",
+        validation: "Format: STU- followed by exactly 6 digits",
+        rules: [
+          { code: "ID-001", severity: "error", description: "Must match format STU-XXXXXX (STU- prefix + 6 digits)", idPrefix: "STU-", idDigits: 6, pattern: "^STU-\\d{6}$" },
+          { code: "ID-002", severity: "error", description: "Must be unique across the dataset", unique: true },
+        ],
+      },
+      {
+        field: "Full Name", type: "text", required: true, example: "Ahmed Al-Mansouri",
+        validation: "Max 120 characters, non-empty",
+        rules: [
+          { code: "BIZ-002", severity: "warning", description: "Must not exceed 120 characters", maxLength: 120 },
+        ],
+      },
+      {
+        field: "Gender", type: "enum", required: true, example: "M",
+        validation: "Allowed values: M, F, U",
+        rules: [
+          { code: "ENUM-001", severity: "error", description: "Must be one of: M, F, U", allowedValues: ["M", "F", "U"] },
+        ],
+      },
+      {
+        field: "Date of Birth", type: "date", required: true, example: "4/15/2010",
+        validation: "M/D/YYYY format, must be in the past",
+        rules: [
+          { code: "DATE-001", severity: "error", description: "Must be valid date in M/D/YYYY format", pattern: "^\\d{1,2}/\\d{1,2}/\\d{4}$" },
+          { code: "DATE-003", severity: "error", description: "Date of birth must be in the past (not today or future)", dateConstraint: "past" },
+        ],
+      },
+      {
+        field: "Nationality", type: "enum", required: true, example: "ARE",
+        validation: "ISO 3166-1 alpha-3 code (3 uppercase letters)",
+        rules: [
+          { code: "ENUM-002", severity: "warning", description: "Must be a valid ISO 3166-1 alpha-3 country code (3 uppercase letters)", pattern: "^[A-Z]{3}$" },
+        ],
+      },
+      {
+        field: "Grade Level", type: "enum", required: true, example: "Grade 7",
+        validation: "Allowed values: Pre-K, KG1, KG2, Grade 1 through Grade 13",
+        rules: [
+          { code: "ENUM-001", severity: "error", description: "Must be one of: Pre-K, KG1, KG2, Grade 1–Grade 13", allowedValues: ["Pre-K", "KG1", "KG2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Grade 13"] },
+        ],
+      },
+      {
+        field: "Enrollment Date", type: "date", required: true, example: "9/1/2024",
+        validation: "M/D/YYYY format",
+        rules: [
+          { code: "DATE-001", severity: "error", description: "Must be valid date in M/D/YYYY format", pattern: "^\\d{1,2}/\\d{1,2}/\\d{4}$" },
+        ],
+      },
+      {
+        field: "School ID", type: "id", required: true, example: "SCH-0042",
+        validation: "Format: SCH- followed by exactly 4 digits",
+        rules: [
+          { code: "ID-001", severity: "error", description: "Must match format SCH-XXXX (SCH- prefix + 4 digits)", idPrefix: "SCH-", idDigits: 4, pattern: "^SCH-\\d{4}$" },
+        ],
+      },
+      {
+        field: "SEN Category", type: "enum", required: false, example: "None",
+        validation: "Allowed values: None, Physical, Learning, Gifted, Other",
+        rules: [
+          { code: "ENUM-001", severity: "warning", description: "Must be one of: None, Physical, Learning, Gifted, Other", allowedValues: ["None", "Physical", "Learning", "Gifted", "Other"] },
+        ],
+      },
+      {
+        field: "Curriculum", type: "enum", required: false, example: "British",
+        validation: "Allowed values: British, American, IB, Indian, MoE, Other",
+        rules: [
+          { code: "ENUM-001", severity: "warning", description: "Must be one of: British, American, IB, Indian, MoE, Other", allowedValues: ["British", "American", "IB", "Indian", "MoE", "Other"] },
+        ],
+      },
     ],
   },
   {
@@ -29,14 +91,65 @@ export const DATA_TEMPLATES: DataTemplate[] = [
     icon: "👩‍🏫",
     rowCount: "10–2,000",
     columns: [
-      { field: "Staff ID", type: "id", required: true, example: "STF-0092", validation: "Format: STF-XXXX" },
-      { field: "Full Name", type: "text", required: true, example: "Sarah Johnson", validation: "Max 120 chars" },
-      { field: "Qualification", type: "enum", required: true, example: "Masters", validation: "Diploma / Bachelor / Masters / PhD" },
-      { field: "Subject Area", type: "text", required: true, example: "Mathematics", validation: "Standard subject taxonomy" },
-      { field: "Employment Type", type: "enum", required: true, example: "Full-time", validation: "Full-time / Part-time / Contract" },
-      { field: "Years of Experience", type: "number", required: true, example: "8", validation: "0–60" },
-      { field: "License Number", type: "id", required: true, example: "LIC-20240892", validation: "KHDA-issued teacher license" },
-      { field: "License Expiry", type: "date", required: true, example: "2026-06-30", validation: "Must be future date" },
+      {
+        field: "Staff ID", type: "id", required: true, example: "STF-0092",
+        validation: "Format: STF- followed by exactly 4 digits",
+        rules: [
+          { code: "ID-001", severity: "error", description: "Must match format STF-XXXX (STF- prefix + 4 digits)", idPrefix: "STF-", idDigits: 4, pattern: "^STF-\\d{4}$" },
+          { code: "ID-002", severity: "error", description: "Must be unique across the dataset", unique: true },
+        ],
+      },
+      {
+        field: "Full Name", type: "text", required: true, example: "Sarah Johnson",
+        validation: "Max 120 characters, non-empty",
+        rules: [
+          { code: "BIZ-002", severity: "warning", description: "Must not exceed 120 characters", maxLength: 120 },
+        ],
+      },
+      {
+        field: "Qualification", type: "enum", required: true, example: "Masters",
+        validation: "Allowed values: Diploma, Bachelor, Masters, PhD",
+        rules: [
+          { code: "ENUM-001", severity: "error", description: "Must be one of: Diploma, Bachelor, Masters, PhD", allowedValues: ["Diploma", "Bachelor", "Masters", "PhD"] },
+        ],
+      },
+      {
+        field: "Subject Area", type: "text", required: true, example: "Mathematics",
+        validation: "Max 80 characters, non-empty",
+        rules: [
+          { code: "BIZ-002", severity: "warning", description: "Must not exceed 80 characters", maxLength: 80 },
+        ],
+      },
+      {
+        field: "Employment Type", type: "enum", required: true, example: "Full-time",
+        validation: "Allowed values: Full-time, Part-time, Contract",
+        rules: [
+          { code: "ENUM-001", severity: "error", description: "Must be one of: Full-time, Part-time, Contract", allowedValues: ["Full-time", "Part-time", "Contract"] },
+        ],
+      },
+      {
+        field: "Years of Experience", type: "number", required: true, example: "8",
+        validation: "Integer between 0 and 60",
+        rules: [
+          { code: "BIZ-001", severity: "error", description: "Must be a valid number between 0 and 60", min: 0, max: 60 },
+        ],
+      },
+      {
+        field: "License Number", type: "id", required: true, example: "LIC-20240892",
+        validation: "Format: LIC- followed by 8 digits",
+        rules: [
+          { code: "ID-001", severity: "error", description: "Must match format LIC-XXXXXXXX (LIC- prefix + 8 digits)", idPrefix: "LIC-", idDigits: 8, pattern: "^LIC-\\d{8}$" },
+          { code: "ID-002", severity: "error", description: "Must be unique across the dataset", unique: true },
+        ],
+      },
+      {
+        field: "License Expiry", type: "date", required: true, example: "6/30/2026",
+        validation: "M/D/YYYY format, must be a future date",
+        rules: [
+          { code: "DATE-001", severity: "error", description: "Must be valid date in M/D/YYYY format", pattern: "^\\d{1,2}/\\d{1,2}/\\d{4}$" },
+          { code: "DATE-004", severity: "warning", description: "License expiry date should be in the future", dateConstraint: "future" },
+        ],
+      },
     ],
   },
   {
@@ -47,14 +160,62 @@ export const DATA_TEMPLATES: DataTemplate[] = [
     icon: "📊",
     rowCount: "500–50,000",
     columns: [
-      { field: "Student ID", type: "id", required: true, example: "STU-001234", validation: "Must exist in enrollment" },
-      { field: "Subject Code", type: "id", required: true, example: "MATH-07", validation: "Standard subject code" },
-      { field: "Assessment Type", type: "enum", required: true, example: "Final Exam", validation: "Quiz / Midterm / Final Exam / Coursework" },
-      { field: "Score", type: "number", required: true, example: "87", validation: "0 – Max Score" },
-      { field: "Max Score", type: "number", required: true, example: "100", validation: "Positive integer" },
-      { field: "Academic Year", type: "text", required: true, example: "2024-2025", validation: "YYYY-YYYY" },
-      { field: "Term", type: "enum", required: true, example: "Term 1", validation: "Term 1 / Term 2 / Term 3" },
-      { field: "Grade Letter", type: "enum", required: false, example: "B+", validation: "A* A B C D E U" },
+      {
+        field: "Student ID", type: "id", required: true, example: "STU-001234",
+        validation: "Format: STU- followed by exactly 6 digits (must exist in enrollment)",
+        rules: [
+          { code: "ID-001", severity: "error", description: "Must match format STU-XXXXXX (STU- prefix + 6 digits)", idPrefix: "STU-", idDigits: 6, pattern: "^STU-\\d{6}$" },
+        ],
+      },
+      {
+        field: "Subject Code", type: "id", required: true, example: "MATH-07",
+        validation: "Format: 2–6 uppercase letters, hyphen, 2 digits",
+        rules: [
+          { code: "ID-001", severity: "error", description: "Must match format XXXX-NN (2-6 uppercase letters + hyphen + 2 digits)", pattern: "^[A-Z]{2,6}-\\d{2}$" },
+        ],
+      },
+      {
+        field: "Assessment Type", type: "enum", required: true, example: "Final Exam",
+        validation: "Allowed values: Quiz, Midterm, Final Exam, Coursework",
+        rules: [
+          { code: "ENUM-001", severity: "error", description: "Must be one of: Quiz, Midterm, Final Exam, Coursework", allowedValues: ["Quiz", "Midterm", "Final Exam", "Coursework"] },
+        ],
+      },
+      {
+        field: "Score", type: "number", required: true, example: "87",
+        validation: "Number between 0 and Max Score",
+        rules: [
+          { code: "BIZ-001", severity: "error", description: "Must be a valid number >= 0", min: 0 },
+        ],
+      },
+      {
+        field: "Max Score", type: "number", required: true, example: "100",
+        validation: "Positive integer (> 0)",
+        rules: [
+          { code: "BIZ-001", severity: "error", description: "Must be a positive integer greater than 0", min: 1 },
+        ],
+      },
+      {
+        field: "Academic Year", type: "text", required: true, example: "2024-2025",
+        validation: "Format: YYYY-YYYY (consecutive years)",
+        rules: [
+          { code: "BIZ-003", severity: "error", description: "Must match YYYY-YYYY format with consecutive years", pattern: "^\\d{4}-\\d{4}$" },
+        ],
+      },
+      {
+        field: "Term", type: "enum", required: true, example: "Term 1",
+        validation: "Allowed values: Term 1, Term 2, Term 3",
+        rules: [
+          { code: "ENUM-001", severity: "error", description: "Must be one of: Term 1, Term 2, Term 3", allowedValues: ["Term 1", "Term 2", "Term 3"] },
+        ],
+      },
+      {
+        field: "Grade Letter", type: "enum", required: false, example: "B+",
+        validation: "Allowed values: A*, A, B, C, D, E, U",
+        rules: [
+          { code: "ENUM-001", severity: "warning", description: "Must be one of: A*, A, B, C, D, E, U", allowedValues: ["A*", "A", "B", "C", "D", "E", "U"] },
+        ],
+      },
     ],
   },
   {
@@ -65,14 +226,64 @@ export const DATA_TEMPLATES: DataTemplate[] = [
     icon: "🏫",
     rowCount: "10–500",
     columns: [
-      { field: "School ID", type: "id", required: true, example: "SCH-0042", validation: "KHDA registered school" },
-      { field: "Building ID", type: "id", required: true, example: "BLD-003", validation: "Unique within school" },
-      { field: "Building Name", type: "text", required: true, example: "Science Block A", validation: "Max 80 chars" },
-      { field: "Capacity (Students)", type: "number", required: true, example: "240", validation: "Positive integer" },
-      { field: "Condition Score", type: "number", required: true, example: "78", validation: "0–100" },
-      { field: "Last Inspection Date", type: "date", required: true, example: "2024-03-10", validation: "ISO 8601" },
-      { field: "Accessible (Y/N)", type: "enum", required: true, example: "Y", validation: "Y / N" },
-      { field: "Fire Safety Certified", type: "enum", required: true, example: "Y", validation: "Y / N / Pending" },
+      {
+        field: "School ID", type: "id", required: true, example: "SCH-0042",
+        validation: "Format: SCH- followed by exactly 4 digits",
+        rules: [
+          { code: "ID-001", severity: "error", description: "Must match format SCH-XXXX (SCH- prefix + 4 digits)", idPrefix: "SCH-", idDigits: 4, pattern: "^SCH-\\d{4}$" },
+        ],
+      },
+      {
+        field: "Building ID", type: "id", required: true, example: "BLD-003",
+        validation: "Format: BLD- followed by exactly 3 digits, unique within dataset",
+        rules: [
+          { code: "ID-001", severity: "error", description: "Must match format BLD-XXX (BLD- prefix + 3 digits)", idPrefix: "BLD-", idDigits: 3, pattern: "^BLD-\\d{3}$" },
+          { code: "ID-002", severity: "error", description: "Must be unique across the dataset", unique: true },
+        ],
+      },
+      {
+        field: "Building Name", type: "text", required: true, example: "Science Block A",
+        validation: "Max 80 characters, non-empty",
+        rules: [
+          { code: "BIZ-002", severity: "warning", description: "Must not exceed 80 characters", maxLength: 80 },
+        ],
+      },
+      {
+        field: "Capacity (Students)", type: "number", required: true, example: "240",
+        validation: "Positive integer between 1 and 10000",
+        rules: [
+          { code: "BIZ-001", severity: "error", description: "Must be a positive integer between 1 and 10000", min: 1, max: 10000 },
+        ],
+      },
+      {
+        field: "Condition Score", type: "number", required: true, example: "78",
+        validation: "Integer between 0 and 100",
+        rules: [
+          { code: "BIZ-001", severity: "error", description: "Must be a number between 0 and 100", min: 0, max: 100 },
+        ],
+      },
+      {
+        field: "Last Inspection Date", type: "date", required: true, example: "3/10/2024",
+        validation: "M/D/YYYY format, must be in the past or today",
+        rules: [
+          { code: "DATE-001", severity: "error", description: "Must be valid date in M/D/YYYY format", pattern: "^\\d{1,2}/\\d{1,2}/\\d{4}$" },
+          { code: "DATE-005", severity: "warning", description: "Inspection date should be in the past or today", dateConstraint: "pastOrToday" },
+        ],
+      },
+      {
+        field: "Accessible (Y/N)", type: "enum", required: true, example: "Y",
+        validation: "Allowed values: Y, N",
+        rules: [
+          { code: "ENUM-001", severity: "error", description: "Must be one of: Y, N", allowedValues: ["Y", "N"] },
+        ],
+      },
+      {
+        field: "Fire Safety Certified", type: "enum", required: true, example: "Y",
+        validation: "Allowed values: Y, N, Pending",
+        rules: [
+          { code: "ENUM-001", severity: "error", description: "Must be one of: Y, N, Pending", allowedValues: ["Y", "N", "Pending"] },
+        ],
+      },
     ],
   },
 ];
@@ -86,16 +297,16 @@ export const SAMPLE_SOURCE_COLUMNS: Record<string, string[]> = {
 
 export const MOCK_ISSUES = [
   { row: 14, field: "Student ID", value: "STU-14X", message: "Invalid ID format — expected STU-XXXXXX (6 digits)", severity: "error" as const, ruleCode: "ID-001" },
-  { row: 23, field: "Date of Birth", value: "1990/02/30", message: "Invalid date — February has no 30th day", severity: "error" as const, ruleCode: "DATE-002" },
-  { row: 45, field: "Nationality", value: "EMRT", message: "Unrecognized code — use ISO 3166-1 alpha-3 (e.g. ARE)", severity: "warning" as const, ruleCode: "ENUM-003" },
-  { row: 78, field: "Grade Level", value: "K-14", message: "Grade out of range — valid values: Pre-K through Grade 13", severity: "error" as const, ruleCode: "ENUM-001" },
-  { row: 92, field: "Enrollment Date", value: "2025-13-01", message: "Month '13' is invalid — expected 01–12", severity: "error" as const, ruleCode: "DATE-001" },
-  { row: 101, field: "Gender", value: "X", message: "Unrecognized code — expected M, F, or U", severity: "warning" as const, ruleCode: "ENUM-002" },
-  { row: 134, field: "School ID", value: "SCH-9999", message: "School not found in KHDA registry", severity: "error" as const, ruleCode: "REF-001" },
-  { row: 156, field: "Date of Birth", value: "2025-06-15", message: "Student birth date is in the future", severity: "error" as const, ruleCode: "DATE-003" },
+  { row: 23, field: "Date of Birth", value: "13/30/1990", message: "Invalid date — expected M/D/YYYY format", severity: "error" as const, ruleCode: "DATE-001" },
+  { row: 45, field: "Nationality", value: "EMRT", message: "Unrecognized code — must be a 3-letter ISO 3166-1 alpha-3 code (e.g. ARE)", severity: "warning" as const, ruleCode: "ENUM-002" },
+  { row: 78, field: "Grade Level", value: "K-14", message: "Grade out of range — must be one of: Pre-K, KG1, KG2, Grade 1–Grade 13", severity: "error" as const, ruleCode: "ENUM-001" },
+  { row: 92, field: "Enrollment Date", value: "13/1/2025", message: "Month '13' is invalid — expected 1–12", severity: "error" as const, ruleCode: "DATE-002" },
+  { row: 101, field: "Gender", value: "X", message: "Unrecognized code — must be one of: M, F, U", severity: "error" as const, ruleCode: "ENUM-001" },
+  { row: 134, field: "School ID", value: "SCH-9999", message: "Invalid format — expected SCH- followed by 4 digits", severity: "error" as const, ruleCode: "ID-001" },
+  { row: 156, field: "Date of Birth", value: "6/15/2025", message: "Date of birth must be in the past", severity: "error" as const, ruleCode: "DATE-003" },
   { row: 201, field: "Full Name", value: "", message: "Required field is empty", severity: "error" as const, ruleCode: "REQ-001" },
-  { row: 220, field: "Enrollment Date", value: "2019-01-15", message: "Date predates school KHDA registration (2020)", severity: "info" as const, ruleCode: "BIZ-001" },
-  { row: 245, field: "SEN Category", value: "Partial", message: "Unrecognized value — expected None / Physical / Learning / Gifted / Other", severity: "warning" as const, ruleCode: "ENUM-004" },
+  { row: 220, field: "Enrollment Date", value: "1/15/2019", message: "Date predates school KHDA registration (2020)", severity: "info" as const, ruleCode: "BIZ-001" },
+  { row: 245, field: "SEN Category", value: "Partial", message: "Unrecognized value — must be one of: None, Physical, Learning, Gifted, Other", severity: "warning" as const, ruleCode: "ENUM-001" },
 ];
 
 export const QUALITY_DIMENSIONS = [
@@ -112,10 +323,10 @@ export const SAMPLE_SOURCE_DATA: Record<string, Record<string, string[]>> = {
     student_id: ["STU-001234", "STU-001235", "STU-001236"],
     name: ["Ahmed Al-Mansouri", "Fatima Hassan", "James Wilson"],
     sex: ["M", "F", "M"],
-    DOB: ["2010-04-15", "2009-11-02", "2008-06-30"],
+    DOB: ["4/15/2010", "11/2/2009", "6/30/2008"],
     nationality_code: ["ARE", "IND", "GBR"],
     grade: ["Grade 7", "Grade 7", "Grade 8"],
-    enroll_date: ["2024-09-01", "2024-09-01", "2023-09-01"],
+    enroll_date: ["9/1/2024", "9/1/2024", "9/1/2023"],
     school_id: ["SCH-0042", "SCH-0042", "SCH-0042"],
     sen_type: ["None", "Learning", "None"],
     curriculum: ["British", "IB", "American"],
@@ -128,7 +339,7 @@ export const SAMPLE_SOURCE_DATA: Record<string, Record<string, string[]>> = {
     emp_status: ["Full-time", "Full-time", "Part-time"],
     exp_years: ["8", "12", "3"],
     license_no: ["LIC-20240892", "LIC-20230155", "LIC-20240601"],
-    license_exp: ["2026-06-30", "2025-12-31", "2026-09-15"],
+    license_exp: ["6/30/2026", "12/31/2025", "9/15/2026"],
   },
   performance: {
     stu_id: ["STU-001234", "STU-001235", "STU-001236"],
@@ -146,7 +357,7 @@ export const SAMPLE_SOURCE_DATA: Record<string, Record<string, string[]>> = {
     bldg_name: ["Science Block A", "Main Hall", "Sports Complex"],
     student_cap: ["240", "500", "120"],
     cond_index: ["78", "92", "65"],
-    last_inspect: ["2024-03-10", "2024-01-15", "2023-11-20"],
+    last_inspect: ["3/10/2024", "1/15/2024", "11/20/2023"],
     wheelchair_access: ["Y", "Y", "N"],
     fire_cert: ["Y", "Y", "Pending"],
   },

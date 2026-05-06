@@ -3,9 +3,8 @@ import { cn } from "@/lib/utils";
 import {
   CheckCircle2, XCircle, AlertTriangle, Info, Download,
   Table, TrendingUp, ShieldCheck, Filter, ArrowUpRight, RotateCcw, Sparkles,
-  Loader2, Database,
+  Loader2, Database, ArrowLeft,
 } from "lucide-react";
-import { MOCK_ISSUES, QUALITY_DIMENSIONS } from "./data";
 import type { ValidationResults } from "./types";
 
 interface StageResultsProps {
@@ -13,12 +12,13 @@ interface StageResultsProps {
   templateLabel: string;
   validationResults: ValidationResults | null;
   onReset: () => void;
+  onBack?: () => void;
 }
 
 type FilterType = "all" | "error" | "warning" | "info";
 type TabType = "summary" | "issues" | "quality" | "remediation";
 
-export const StageResults = ({ fileName, templateLabel, validationResults, onReset }: StageResultsProps) => {
+export const StageResults = ({ fileName, templateLabel, validationResults, onReset, onBack }: StageResultsProps) => {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [activeTab, setActiveTab] = useState<TabType>("summary");
   const [submitting, setSubmitting] = useState(false);
@@ -33,12 +33,12 @@ export const StageResults = ({ fileName, templateLabel, validationResults, onRes
     }, 2000);
   };
 
-  // Derive all values from validationResults, falling back to mock data
+  // Derive all values from validationResults (always populated by validation stage)
   const results = validationResults ?? {
-    issues: MOCK_ISSUES,
-    qualityDimensions: QUALITY_DIMENSIONS,
+    issues: [],
+    qualityDimensions: [],
     remediations: [],
-    totalRows: 1284,
+    totalRows: 0,
     summary: "",
   };
 
@@ -71,6 +71,15 @@ export const StageResults = ({ fileName, templateLabel, validationResults, onRes
 
   return (
     <div className="space-y-4 animate-fade-up">
+
+      {onBack && !submitted && (
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Validation
+        </button>
+      )}
 
       <div className={cn("rounded-xl p-5 flex items-center gap-4 border")}
         style={PASS_RATE >= 95

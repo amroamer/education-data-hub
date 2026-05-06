@@ -44,6 +44,43 @@ export const StageSelect = ({ selectedTemplate, onSelectTemplate, onNext }: Stag
     ];
     XLSX.utils.book_append_sheet(wb, schemaSheet, "Schema Reference");
 
+    // Sheet 3: Validation Rules — detailed machine-enforced rules
+    const rulesHeaders = ["Field", "Rule Code", "Severity", "Description", "Pattern / Allowed Values", "Constraints"];
+    const rulesRows: (string | number)[][] = [];
+    for (const col of template.columns) {
+      // Required rule
+      if (col.required) {
+        rulesRows.push([col.field, "REQ-001", "ERROR", "Field must not be empty", "", "required"]);
+      }
+      // Structured rules
+      for (const r of (col.rules ?? [])) {
+        const patternOrValues = r.allowedValues
+          ? r.allowedValues.join(", ")
+          : r.pattern ?? "";
+        const constraints: string[] = [];
+        if (r.min !== undefined) constraints.push(`min=${r.min}`);
+        if (r.max !== undefined) constraints.push(`max=${r.max}`);
+        if (r.maxLength) constraints.push(`maxLength=${r.maxLength}`);
+        if (r.unique) constraints.push("unique");
+        if (r.dateConstraint) constraints.push(`date: ${r.dateConstraint}`);
+        if (r.idPrefix) constraints.push(`prefix=${r.idPrefix}`);
+        if (r.idDigits) constraints.push(`digits=${r.idDigits}`);
+        rulesRows.push([
+          col.field,
+          r.code,
+          r.severity.toUpperCase(),
+          r.description,
+          patternOrValues,
+          constraints.join(", "),
+        ]);
+      }
+    }
+    const rulesSheet = XLSX.utils.aoa_to_sheet([rulesHeaders, ...rulesRows]);
+    rulesSheet["!cols"] = [
+      { wch: 22 }, { wch: 12 }, { wch: 10 }, { wch: 55 }, { wch: 40 }, { wch: 30 },
+    ];
+    XLSX.utils.book_append_sheet(wb, rulesSheet, "Validation Rules");
+
     // Trigger download
     XLSX.writeFile(wb, `${template.label.replace(/\s+/g, "_")}_Template.xlsx`);
   }, [template]);
