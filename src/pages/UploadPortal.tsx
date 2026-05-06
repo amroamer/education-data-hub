@@ -28,7 +28,7 @@ const UploadPortal = () => {
   }, []);
 
   return (
-    <div className="max-w-5xl space-y-0">
+    <div className="space-y-0">
       {/* Page header */}
       <div className="page-header flex items-end justify-between">
         <div>
